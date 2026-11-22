@@ -28,6 +28,7 @@ export default function App() {
     const onPopState = () => setPathname(window.location.pathname);
     const onMessage = event => {
       if (event.origin !== window.location.origin || event.data?.type !== 'mindpop:navigate') return;
+      if (event.data.path === '/') { navigate('/'); return; }
       const match = /^\/games\/([a-z-]+)\/(setup|gameplay|results)$/.exec(event.data.path || '');
       if (match && gamePages[match[1]] && validScreens.has(match[2])) navigate(event.data.path);
     };

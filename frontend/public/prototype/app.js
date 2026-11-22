@@ -56,6 +56,13 @@ const go = screen => {
   location.href = `${game}-${screen}.html`;
 };
 
+const goHome = () => {
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: "mindpop:navigate", path: "/" }, window.location.origin);
+    return;
+  }
+  location.href = "code.html";
+};
 const defaults = {
   mode: game === "quick-math" ? "timed" : "classic",
   difficulty: game === "stroop" ? "hard" : "easy",
@@ -138,40 +145,13 @@ document.body.innerHTML = `
 
   <main id="app"></main>
 
-  <dialog id="games-dialog">
-    <h2>Choose your challenge</h2>
-
-    <nav>
-      ${Object.entries(titles)
-        .map(
-          ([id, name]) =>
-            `<a href="${id}-setup.html">${name} →</a>`
-        )
-        .join("")}
-    </nav>
-
-    <button class="button primary" id="close-dialog" type="button">
-      Close
-    </button>
-  </dialog>
 `;
 
-$("#all-games").onclick = () => $("#games-dialog").showModal();
-$("#close-dialog").onclick = () => $("#games-dialog").close();
+$("#all-games").onclick = goHome;
 $(".brand").addEventListener("click", event => {
-  if (window.parent === window) return;
   event.preventDefault();
-  go("setup");
+  goHome();
 });
-
-$("#games-dialog nav").addEventListener("click", event => {
-  const link = event.target.closest("a");
-  if (!link || window.parent === window) return;
-  event.preventDefault();
-  const slug = link.getAttribute("href").replace(/-setup\.html$/, "");
-  window.parent.postMessage({ type: "mindpop:navigate", path: `/games/${slug}/setup` }, window.location.origin);
-});
-
 /* ---------- Setup pages ---------- */
 
 function group(label, name, items) {
@@ -1521,7 +1501,7 @@ function results() {
   `;
 
   $("#again").onclick = () => go("gameplay");
-  $("#back").onclick = () => $("#games-dialog").showModal();
+  $("#back").onclick = goHome;
 }
 
 /* ---------- Route initialization ---------- */
