@@ -1,6 +1,15 @@
-import React from 'react';
-import { GAME_DATA, GAME_IDS } from '../data/gameData.js';
-import { readStorage } from '../lib/gameStorage.js';
+import React, { useCallback, useEffect, useState } from 'react';
+import { GAME_DATA } from '../data/gameData.js';
+import { fetchGames } from '../lib/api.js';
+
+const GAME_ROUTES = {
+  stroop: 'stroop',
+  memory: 'memory-match',
+  'memory-match': 'memory-match',
+  'word-hunt': 'word-hunt',
+  'quick-math': 'quick-math',
+  'ball-tracker': 'ball-tracker',
+};
 
 function BallTrackerIcon() {
   return (
@@ -34,24 +43,30 @@ function HomeIllustration({ game }) {
 }
 
 function GameCard({ game, onNavigate }) {
-  const meta = GAME_DATA[game];
-  const config = readStorage(`${game}:config`, { mode: meta.defaultMode, difficulty: meta.defaultDifficulty });
-  const bestKey = `${game}:best:${config.mode}:${config.difficulty}:${game === 'memory-match' ? config.theme ?? meta.defaultTheme : ''}`;
-  const best = Number(readStorage(bestKey, 0)) || 0;
+  const route = GAME_ROUTES[String(game.iconKey || '').trim().toLowerCase()];
+  if (!route) return null;
+
+  const meta = GAME_DATA[route];
+  const category = game.categoryLabel || game.category || meta.category;
+  const description = game.description || meta.cardDescription;
+  const mode = game.mode || meta.defaultMode;
+  const difficulty = game.difficulty || meta.defaultDifficulty;
+  const best = Number(game.bestScore) || 0;
+
   return (
-    <article className={`card ${meta.cardClass}`}>
+    <article className={'card ' + meta.cardClass}>
       <div className="summary">
-        <div className="illustration" aria-hidden="true"><HomeIllustration game={game} /></div>
+        <div className="illustration" aria-hidden="true"><HomeIllustration game={route} /></div>
         <div className="copy">
-          <span className="category">{meta.category}</span>
-          <h3>{meta.title}</h3>
-          <p className="description">{meta.cardDescription}</p>
+          <span className="category">{category}</span>
+          <h3>{game.title || meta.title}</h3>
+          <p className="description">{description}</p>
         </div>
       </div>
       <div className="card-footer">
-        <div className="details"><span>BEST {best}</span><span className="dot" /><span className="mode">{config.mode.toUpperCase()} · {config.difficulty.toUpperCase()}</span></div>
-        <button className="play" type="button" onClick={() => onNavigate(`/games/${game}/setup`)} aria-label={`Play ${meta.title}`}>
-          PLAY <span aria-hidden="true">▷</span>
+        <div className="details"><span>BEST {best}</span><span className="dot" /><span className="mode">{String(mode).toUpperCase()} · {String(difficulty).toUpperCase()}</span></div>
+        <button className="play" type="button" onClick={() => onNavigate('/games/' + route + '/setup')} aria-label={'Play ' + (game.title || meta.title)}>
+          PLAY <span aria-hidden="true">▹</span>
         </button>
       </div>
     </article>
@@ -59,6 +74,29 @@ function GameCard({ game, onNavigate }) {
 }
 
 export default function HomePage({ onNavigate }) {
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadGames = useCallback(async (signal) => {
+    setLoading(true);
+    setError('');
+    try {
+      const records = await fetchGames(signal);
+      setGames(records.filter(game => GAME_ROUTES[String(game.iconKey || '').trim().toLowerCase()]));
+    } catch (loadError) {
+      if (loadError.name !== 'AbortError') setError(loadError.message || 'Games could not be loaded.');
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadGames(controller.signal);
+    return () => controller.abort();
+  }, [loadGames]);
+
   return (
     <div className="home-page">
       <header className="header">
@@ -69,7 +107,7 @@ export default function HomePage({ onNavigate }) {
           </a>
           <a className="nav-link" href="#games">All Games</a>
         </nav>
-        <div className="offline">Offline mode · Best scores saved on this device</div>
+        <div className="offline">Game catalog · Loaded from backend</div>
       </header>
 
       <main>
@@ -78,10 +116,20 @@ export default function HomePage({ onNavigate }) {
         <section aria-labelledby="games-heading">
           <div className="section-heading">
             <h2 id="games-heading">Choose your challenge</h2>
-            <span className="count">5 GAMES</span>
+            <span className="count">{games.length} GAMES</span>
           </div>
-          <div className="games" id="games">
-            {GAME_IDS.map(game => <GameCard key={game} game={game} onNavigate={onNavigate} />)}
+          <div className="games" id="games" aria-live="polite">
+            {loading && <p role="status">Loading games…</p>}
+            {!loading && error && (
+              <div role="alert">
+                <p>{error}</p>
+                <button className="play" type="button" onClick={() => loadGames()}>Retry</button>
+              </div>
+            )}
+            {!loading && !error && games.length === 0 && <p>No playable games are currently available.</p>}
+            {!loading && !error && games.map(game => (
+              <GameCard key={game._id || game.iconKey} game={game} onNavigate={onNavigate} />
+            ))}
           </div>
         </section>
       </main>

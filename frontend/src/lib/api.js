@@ -1,23 +1,12 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
-export async function apiRequest(path, options = {}) {
-  const token = localStorage.getItem('auth_token');
-  const response = await fetch(`${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+export async function fetchGames(signal) {
+  const response = await fetch(API_BASE_URL + '/api/games', { signal });
+  const payload = await response.json().catch(() => null);
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || `Request failed (${response.status})`);
+  if (!response.ok || !payload?.success || !Array.isArray(payload.data)) {
+    throw new Error(payload?.message || 'Games could not be loaded from the backend.');
   }
-  return data;
-}
 
-export async function getApiHealth() {
-  return apiRequest('/health');
+  return payload.data;
 }
