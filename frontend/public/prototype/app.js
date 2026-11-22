@@ -144,14 +144,35 @@ document.body.innerHTML = `
   </header>
 
   <main id="app"></main>
+  <dialog id="leave-game-dialog" aria-labelledby="leave-game-title" aria-describedby="leave-game-copy">
+    <h2 id="leave-game-title">Leave this game?</h2>
+    <p id="leave-game-copy" class="leave-game-copy">If you go to All Games now, this round will be cancelled and your current progress will be lost.</p>
+    <div class="leave-game-actions">
+      <button class="button secondary" id="stay-in-game" type="button">Stay in game</button>
+      <button class="button primary" id="confirm-leave-game" type="button">Leave game</button>
+    </div>
+  </dialog>
 
 `;
 
-$("#all-games").onclick = goHome;
+const requestHomeNavigation = () => {
+  if (view === "gameplay") {
+    $("#leave-game-dialog").showModal();
+    return;
+  }
+  goHome();
+};
+
+$("#all-games").onclick = requestHomeNavigation;
 $(".brand").addEventListener("click", event => {
   event.preventDefault();
-  goHome();
+  requestHomeNavigation();
 });
+$("#stay-in-game").onclick = () => $("#leave-game-dialog").close();
+$("#confirm-leave-game").onclick = () => {
+  $("#leave-game-dialog").close();
+  goHome();
+};
 /* ---------- Setup pages ---------- */
 
 function group(label, name, items) {
