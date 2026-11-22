@@ -567,60 +567,90 @@ legend {
 }
 
 /* Memory Match */
-
 .memory-grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   gap: 14px;
 }
 
 .memory-card {
   position: relative;
+  display: block;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 24px;
+  background: transparent;
+  color: var(--ink);
+  perspective: 1000px;
+  transition: transform .18s ease, filter .18s ease;
+}
+
+.memory-card:hover:not(:disabled) { transform: translateY(-3px); }
+.memory-card:disabled { cursor: default; }
+.memory-card .back,
+.memory-card .face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+  border: 2px solid #ffffffd9;
+  border-radius: inherit;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: transform .48s cubic-bezier(.2,.75,.25,1), box-shadow .2s ease;
+}
+
+.memory-card .back {
+  gap: 5px;
+  color: white;
+  background: var(--card-tone);
+  box-shadow: 0 7px 0 #20183d22, 0 12px 20px #20183d20;
+  transform: rotateY(0deg);
+}
+.memory-back-mark { font-size: clamp(2rem, 4vw, 3rem); line-height: 1; }
+.memory-card .back small { font-size: 9px; font-weight: 800; letter-spacing: 2px; opacity: .85; }
+
+.memory-card .face {
+  gap: 2px;
+  padding: 5px;
+  color: #20183d;
+  background: linear-gradient(145deg, #fff 8%, #f4f0ff 100%);
+  box-shadow: 0 7px 0 #20183d18, 0 12px 20px #20183d1b;
+  transform: rotateY(180deg);
+}
+.face-icon {
   display: grid;
   place-items: center;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: 2px solid #ffffff88;
-  border-radius: 24px;
-  color: white;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1;
 }
-
-.memory-card::before {
-  content: "";
-  position: absolute;
-  top: -20%;
-  right: -15%;
-  width: 50%;
-  height: 50%;
-  border-radius: 50%;
-  background: #ffffff15;
-}
-
-.tone-0 { background: #ad8665; }
-.tone-1 { background: #287dff; }
-.tone-2 { background: #ff4f86; }
-.tone-3 { background: #f5bc24; }
-.tone-4 { background: #16b993; }
-.tone-5 { background: #ff373f; }
-.tone-6 { background: #ff7647; }
-.tone-7 { background: #8554ed; }
-
-.back { font-size: 54px; line-height: 1; }
-.back small { display: block; font-size: 20px; letter-spacing: 3px; }
-
-.face {
-  display: none;
-  max-width: 100%;
-  padding: 4px;
-  overflow-wrap: anywhere;
-  font-size: 22px;
+.memory-card .face small {
+  color: #77728a;
+  font-size: 10px;
   font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: uppercase;
 }
 
-.flipped { background: #fff3de; color: var(--ink); }
-.flipped .back { display: none; }
-.flipped .face { display: block; }
-.matched { visibility: hidden; }
+.tone-0 { --card-tone: #7451d8; }
+.tone-1 { --card-tone: #1687a5; }
+.tone-2 { --card-tone: #d44e78; }
+.tone-3 { --card-tone: #378b62; }
+.tone-4 { --card-tone: #c46b2f; }
+.tone-5 { --card-tone: #405bb8; }
+.tone-6 { --card-tone: #ad477f; }
+.tone-7 { --card-tone: #687c30; }
+
+.memory-card.flipped .back { transform: rotateY(-180deg); }
+.memory-card.flipped .face { transform: rotateY(0deg); }
+.memory-card.matched { visibility: hidden; }
 
 .board-status {
   margin-top: 20px;
@@ -635,9 +665,8 @@ legend {
 
 .memory-grid:has(> :nth-child(36)) { gap: 8px; }
 .memory-grid:has(> :nth-child(36)) .memory-card { border-radius: 14px; }
-.memory-grid:has(> :nth-child(36)) .back { font-size: 32px; }
-.memory-grid:has(> :nth-child(36)) .face { font-size: 15px; }
-
+.memory-grid:has(> :nth-child(36)) .face-icon { font-size: clamp(1.35rem, 3.1vw, 2.1rem); }
+.memory-grid:has(> :nth-child(36)) .memory-card .face small { font-size: 8px; }
 /* Word Hunt */
 
 .targets {
@@ -1048,7 +1077,6 @@ dialog a {
   .ball-stage h2 { font-size: 36px; }
   .letter { font-size: 30px; }
   .result-stat strong { font-size: 28px; }
-  .face { font-size: 17px; }
 }
 
 @media (max-width: 760px) {
@@ -1100,9 +1128,6 @@ dialog a {
   .board-heading > span { font-size: 10px; }
   .memory-grid { gap: 10px; }
   .memory-card { border-radius: 16px; }
-  .back { font-size: 38px; }
-  .face { font-size: 14px; }
-  .memory-grid:has(> :nth-child(36)) .face { font-size: 10px; }
   .board-status { font-size: 14px; }
   .letter { font-size: 28px; }
   .word-grid[style*="8"] .letter { font-size: 22px; }
@@ -1140,7 +1165,7 @@ dialog a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .progress i { transition: none; }
+  .progress i, .memory-card .back, .memory-card .face { transition: none; }
 }
 
 

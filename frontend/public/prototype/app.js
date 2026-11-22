@@ -809,61 +809,77 @@ function question() {
 function memory() {
   const symbols = {
     fruit: [
-      "🍎", "🍐", "🍊", "🍋", "🍌", "🍉",
-      "🍇", "🍓", "🍒", "🍑", "🍍", "🥝",
-      "🥭", "🫐", "🍈", "🥥", "🍏", "🫒"
-    ],
+      0x1F34E, 0x1F34F, 0x1F34A, 0x1F34B, 0x1F34C, 0x1F349,
+      0x1F347, 0x1F353, 0x1F352, 0x1F351, 0x1F34D, 0x1F95D,
+      0x1F96D, 0x1FAD0, 0x1F348, 0x1F965, 0x1F350, 0x1F951
+    ].map(codePoint => String.fromCodePoint(codePoint)),
     shapes: [
-      "●", "■", "▲", "◆", "★", "♥",
-      "✦", "✚", "○", "□", "△", "◇",
-      "☆", "♡", "✧", "✖", "⬟", "⬡"
-    ]
+      0x25CF, 0x25A0, 0x25B2, 0x25C6, 0x2605, 0x2665,
+      0x2726, 0x2728, 0x25CB, 0x25A1, 0x25B3, 0x25C7,
+      0x2606, 0x2661, 0x2737, 0x2736, 0x2B1F, 0x2B21
+    ].map(codePoint => String.fromCodePoint(codePoint))
   };
 
-  // Text labels replace the design's animal photographs.
-  const animalLabels = [
+  const animalNames = [
     "Lion", "Bear", "Fox", "Cat", "Dog", "Owl",
     "Panda", "Tiger", "Wolf", "Deer", "Horse", "Rabbit",
-    "Koala", "Otter", "Zebra", "Lynx", "Seal", "Mouse"
+    "Koala", "Otter", "Zebra", "Unicorn", "Seal", "Mouse"
   ];
+  const animals = [
+    0x1F981, 0x1F43B, 0x1F98A, 0x1F431, 0x1F436, 0x1F989,
+    0x1F43C, 0x1F42F, 0x1F43A, 0x1F98C, 0x1F434, 0x1F430,
+    0x1F428, 0x1F9A6, 0x1F993, 0x1F984, 0x1F9AD, 0x1F42D
+  ].map(codePoint => String.fromCodePoint(codePoint));
 
   const deck = shuffle(
     [...Array(S.total).keys()].flatMap(id => [id, id])
   );
-
+  const pairTones = Array.from({ length: S.total }, () => {
+    const first = Math.floor(Math.random() * 8);
+    let second = Math.floor(Math.random() * 7);
+    if (second >= first) second++;
+    return [first, second];
+  });
+  const seen = Array(S.total).fill(0);
+  const cardTones = deck.map(id => pairTones[id][seen[id]++]);
   let open = [];
+
+  const faceFor = id => config.theme === "animals"
+    ? animals[id]
+    : symbols[config.theme][id];
+  const labelFor = id => config.theme === "animals"
+    ? animalNames[id]
+    : `${cap(config.theme)} ${id + 1}`;
 
   $("#board").innerHTML = `
     <div class="puzzle memory-board">
       <div class="board-heading">
-        <b>♧ Find matching pairs</b>
+        <b>Find the matching faces</b>
         <span>${cap(config.theme)} · ${cap(config.difficulty)}</span>
       </div>
 
       <div class="memory-grid" style="--cols:${S.total === 18 ? 6 : 4}">
-        ${deck
-          .map(
-            (id, index) => `
-              <button
-                type="button"
-                class="memory-card tone-${id % 8}"
-                data-card="${index}"
-                aria-label="Reveal card ${index + 1}"
-              >
-                <span class="back">✦<small>•••</small></span>
-                <span class="face">${
-                  config.theme === "animals"
-                    ? animalLabels[id]
-                    : symbols[config.theme][id]
-                }</span>
-              </button>
-            `
-          )
-          .join("")}
+        ${deck.map((id, index) => `
+          <button
+            type="button"
+            class="memory-card tone-${cardTones[index]}"
+            data-card="${index}"
+            aria-label="Reveal ${labelFor(id)} card"
+          >
+            <span class="back" aria-hidden="true">
+              <span class="memory-back-mark">&#x2726;</span>
+              <small>FLIP</small>
+            </span>
+            <span class="face" aria-hidden="true">
+              <span class="face-icon">${faceFor(id)}</span>
+              ${config.theme === "animals" ? `<small>${animalNames[id]}</small>` : ""}
+            </span>
+          </button>
+        `).join("")}
       </div>
 
       <div class="board-status" role="status" aria-live="polite">
-        Reveal two cards to find a pair
+        Flip two cards to find a matching pair
       </div>
     </div>
   `;
@@ -878,31 +894,23 @@ function memory() {
       ) return;
 
       element.classList.add("flipped");
-      element.setAttribute(
-        "aria-label",
-        config.theme === "animals"
-          ? animalLabels[deck[index]]
-          : symbols[config.theme][deck[index]]
-      );
-
+      element.setAttribute("aria-label", labelFor(deck[index]));
       open.push(index);
       if (open.length !== 2) return;
 
       S.attempts++;
       S.locked = true;
-
       const pair = [...open];
       const matched = deck[pair[0]] === deck[pair[1]];
 
       $(".board-status").textContent = matched
         ? "Match found! +80 points"
-        : "No match — these cards flip back";
+        : "Not a match — try to remember them";
 
       if (matched) {
         S.correct++;
         S.score += 80;
       }
-
       sync();
 
       setTimeout(() => {
@@ -910,32 +918,26 @@ function memory() {
 
         pair.forEach(cardIndex => {
           const card = $(`[data-card="${cardIndex}"]`);
-
           if (matched) {
             card.classList.add("matched");
             card.disabled = true;
             card.setAttribute("aria-label", "Matched pair");
           } else {
             card.classList.remove("flipped");
-            card.setAttribute(
-              "aria-label",
-              `Reveal card ${cardIndex + 1}`
-            );
+            card.setAttribute("aria-label", `Reveal ${labelFor(deck[cardIndex])} card`);
           }
         });
 
         open = [];
         S.locked = false;
-
         if (S.correct === S.total) {
-          S.score += 80; // Completion bonus.
+          S.score += 80;
           finish();
         }
       }, 850);
     };
   });
 }
-
 /* ---------- Word Hunt ---------- */
 
 function wordHunt() {
