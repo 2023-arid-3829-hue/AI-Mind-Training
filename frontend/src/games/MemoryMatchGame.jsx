@@ -1,5 +1,3 @@
-import React from "react";
-import GameFrame from "../components/GameFrame.jsx";
-export default function MemoryMatchGame({ screen }) {
-  return <GameFrame game="memory-match" screen={screen} title="Memory Match" />;
-}
+import React from 'react';
+import GameExperience from '../components/GameExperience.jsx';
+export default function MemoryMatchGame({ screen, onNavigate }) { return <GameExperience game="memory-match" screen={screen} onNavigate={onNavigate} />; }

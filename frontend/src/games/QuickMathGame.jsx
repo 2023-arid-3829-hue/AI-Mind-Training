@@ -1,5 +1,3 @@
-import React from "react";
-import GameFrame from "../components/GameFrame.jsx";
-export default function QuickMathGame({ screen }) {
-  return <GameFrame game="quick-math" screen={screen} title="Quick Math" />;
-}
+import React from 'react';
+import GameExperience from '../components/GameExperience.jsx';
+export default function QuickMathGame({ screen, onNavigate }) { return <GameExperience game="quick-math" screen={screen} onNavigate={onNavigate} />; }

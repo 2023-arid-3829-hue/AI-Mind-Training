@@ -1,6 +1,6 @@
-# Frontend prototype
+# Frontend
 
-React + Vite routing for the supplied Figma brain-training screens. The original game engine runs locally without backend calls; settings and scores are stored in browser localStorage.
+React + Vite frontend for the AI Brain Training project. Home, setup, gameplay, and results screens are native React components; games do not use embedded HTML pages.
 
 ## Start
 
@@ -19,4 +19,4 @@ npm run dev
 - `/games/quick-math/{setup|gameplay|results}`
 - `/games/ball-tracker/{setup|gameplay|results}`
 
-Each game has a dedicated React route component. `GameFrame` hosts its local HTML prototype. All screens and the listing page use the shared `public/prototype/styles.css` stylesheet.
+Game screens and mechanics live in `src/games`, `src/components/boards`, and shared React components. Shared styling is in `src/styles.css`. Scores and settings are stored in browser localStorage; the prototype does not call the backend.

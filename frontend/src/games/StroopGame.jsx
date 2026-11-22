@@ -1,5 +1,3 @@
-import React from "react";
-import GameFrame from "../components/GameFrame.jsx";
-export default function StroopGame({ screen }) {
-  return <GameFrame game="stroop" screen={screen} title="Stroop Challenge" />;
-}
+import React from 'react';
+import GameExperience from '../components/GameExperience.jsx';
+export default function StroopGame({ screen, onNavigate }) { return <GameExperience game="stroop" screen={screen} onNavigate={onNavigate} />; }
