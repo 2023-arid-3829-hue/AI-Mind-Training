@@ -1654,3 +1654,29 @@ body.home-prototype a:focus-visible {
   .leave-game-actions { flex-direction: column-reverse; }
   .leave-game-actions .button { width: 100%; }
 }
+/* Stroop feedback and answer interactions */
+.feedback { transition: color .2s ease; }
+.feedback.success { color: #087e60; }
+.feedback.error { color: #be3455; }
+.feedback.success::before { content: "✓ "; }
+.feedback.error::before { content: "↻ "; }
+.feedback.show { animation: feedback-pop .28s ease-out both; }
+@keyframes feedback-pop {
+  from { opacity: .45; transform: translateY(6px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.answer { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.answer:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 12px 22px #20183d1b; }
+.answer:active:not(:disabled) { transform: scale(.97); }
+.answer:disabled { cursor: default; }
+.answer.correct { animation: answer-pop .32s ease-out; }
+.answer.wrong { animation: answer-shake .32s ease-in-out; }
+@keyframes answer-pop { 50% { transform: scale(1.06); } }
+@keyframes answer-shake {
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feedback.show, .answer.correct, .answer.wrong { animation: none; }
+  .answer { transition: none; }
+}

@@ -754,14 +754,14 @@ function question() {
   `;
 
   S.questionStarted = performance.now();
+  const answerButtons = $$(".answer");
 
-  $$(".answer").forEach((element, index) => {
+  answerButtons.forEach((element, index) => {
     element.onclick = () => {
       if (S.locked || S.finished) return;
       S.locked = true;
 
       const correct = options[index] === answer;
-
       S.attempts++;
       S.reactions += (performance.now() - S.questionStarted) / 1000;
 
@@ -769,25 +769,31 @@ function question() {
         S.correct++;
         S.streak++;
         S.maxStreak = Math.max(S.maxStreak, S.streak);
-
         const points = S.streak >= 5 ? 40 : 20;
         S.score += points;
-
-        $(".feedback").textContent = `Correct! +${points}`;
         element.classList.add("correct");
       } else {
         S.streak = 0;
-        $(".feedback").textContent =
-          `Not quite. Correct answer: ${answer}`;
         element.classList.add("wrong");
       }
 
-      $$(".answer").forEach(answerButton => {
+      const feedback = $(".feedback");
+      feedback.classList.add(correct ? "success" : "error", "show");
+      feedback.textContent = game === "stroop"
+        ? correct
+          ? `Great focus! +${S.streak >= 5 ? 40 : 20} points`
+          : `The ink color was ${answer}`
+        : correct
+          ? `Correct! +${S.streak >= 5 ? 40 : 20}`
+          : `Not quite. Correct answer: ${answer}`;
+
+      answerButtons.forEach((answerButton, answerIndex) => {
         answerButton.disabled = true;
+        if (options[answerIndex] === answer) answerButton.classList.add("correct");
       });
 
       sync();
-
+      const feedbackDelay = game === "stroop" ? 1600 : 650;
       setTimeout(() => {
         if (S.finished) return;
 
@@ -800,7 +806,7 @@ function question() {
         } else {
           question();
         }
-      }, 650);
+      }, feedbackDelay);
     };
   });
 }
